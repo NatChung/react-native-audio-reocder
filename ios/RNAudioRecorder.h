@@ -5,7 +5,9 @@
 #import <React/RCTBridgeModule.h>
 #endif
 
-@interface RNAudioRecorder : NSObject <RCTBridgeModule>
+#import <React/RCTEventEmitter.h>
+
+@interface RNAudioRecorder : RCTEventEmitter <RCTBridgeModule>
 
 @end
   
