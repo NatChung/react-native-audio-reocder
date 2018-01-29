@@ -98,43 +98,28 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
     byte u_data[] = new byte[800];
     int read;
 
-    File sdCard = Environment.getExternalStorageDirectory();
-    File file = new File(sdCard.getAbsolutePath(), "audio.pcm");
-    FileOutputStream f = null;
-    int writeOffset = 0;
-
-    try {
-      f = new FileOutputStream(file);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    }
-
     while (isRecording){
 
       read = this.audioRecord.read(data, 0, 1600);
       if(read<=0) continue;
 
-      try {
-        f.write(data);
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
-
-      writeOffset += read;
-
       UlawEncoderInputStream.encode(data, 0, u_data, 0, 1600,8100);
-
       WritableMap params = Arguments.createMap();
-      params.putString("base64", Base64.encodeToString(u_data, 0, 800, Base64.DEFAULT));
-      params.putInt("length", read);
+      params.putString("base64", Base64.encodeToString(u_data, Base64.NO_WRAP));
+      params.putInt("volume", this.getVolume(data, read));
       sendEvent(this.reactContext, "onAudioPCMData", params);
     }
 
-    try {
-      f.close();
-    } catch (IOException e) {
-      e.printStackTrace();
+  }
+
+  private int getVolume(byte[] data, int length){
+    double average = 0.0;
+    for(int i=0;i<(length/2);i++){
+      short s = (short) (data[i*2] << 8  |  data[i*2+1]);
+      average += Math.abs(s);
     }
+
+    return (int)Math.round(average/(length/2));
   }
 
 
