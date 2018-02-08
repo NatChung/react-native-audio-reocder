@@ -35,28 +35,24 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
   private static final int RECORDER_SAMPLERATE = 8000;// 44100;
   private static final String TAG = "RNAudioRecorderModule";
 
-  AudioRecord audioRecord;
-  int bufferSize;
-  boolean isRecording = false;
+  static AudioRecord audioRecord = null;
+  static final int bufferSize = 800 *2;
+  static boolean isRecording = false;
   ReactApplicationContext reactContext;
 
   public RNAudioRecorderModule(ReactApplicationContext reactContext) {
     super(reactContext);
 
     this.reactContext = reactContext;
-    this.bufferSize = 800 *2;
-    this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
+    if(RNAudioRecorderModule.audioRecord == null){
+      RNAudioRecorderModule.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC,
             RECORDER_SAMPLERATE, AudioFormat.CHANNEL_CONFIGURATION_MONO,
             AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 
-    AcousticEchoCanceler aec = AcousticEchoCanceler.create(this.audioRecord.getAudioSessionId());
-    if(aec!=null){
-      aec.setEnabled(true);
-      Log.d(TAG, "AEC enalbe: " + aec.getEnabled());
-
+      AcousticEchoCanceler.create(RNAudioRecorderModule.audioRecord.getAudioSessionId());
+      NoiseSuppressor.create(RNAudioRecorderModule.audioRecord.getAudioSessionId());
+      AutomaticGainControl.create(RNAudioRecorderModule.audioRecord.getAudioSessionId());
     }
-    NoiseSuppressor ns = NoiseSuppressor.create(this.audioRecord.getAudioSessionId());
-    AutomaticGainControl agc = AutomaticGainControl.create(this.audioRecord.getAudioSessionId());
   }
 
   @Override
@@ -70,7 +66,7 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
     Log.i(TAG," Start Recording");
     if(isRecording) return;
 
-    this.audioRecord.startRecording();
+    RNAudioRecorderModule.audioRecord.startRecording();
     isRecording = true;
     new Thread(new Runnable(){
       @Override
@@ -85,7 +81,7 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
 
     Log.i(TAG," STOP Recording");
     isRecording = false;
-    this.audioRecord.stop();
+    RNAudioRecorderModule.audioRecord.stop();
   }
 
   private void sendEvent(ReactContext reactContext,  String eventName, @Nullable WritableMap params) {
@@ -100,7 +96,7 @@ public class RNAudioRecorderModule extends ReactContextBaseJavaModule {
 
     while (isRecording){
 
-      read = this.audioRecord.read(data, 0, 1600);
+      read = RNAudioRecorderModule.audioRecord.read(data, 0, 1600);
       if(read<=0) continue;
 
       UlawEncoderInputStream.encode(data, 0, u_data, 0, 1600,8100);
