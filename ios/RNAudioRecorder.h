@@ -8,6 +8,6 @@
 #import <React/RCTEventEmitter.h>
 
 @interface RNAudioRecorder : RCTEventEmitter <RCTBridgeModule>
-
+- (void)appendAudioData:(const void *)bytes length:(NSUInteger)length;
 @end
   

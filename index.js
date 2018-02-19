@@ -1,17 +1,20 @@
 
 import { 
     NativeModules, 
-    DeviceEventEmitter 
+    DeviceEventEmitter ,
+    NativeEventEmitter,
+    Platform
 } from 'react-native';
 
 const { RNAudioRecorder } = NativeModules;
 
+const emitter = Platform.OS == 'ios' ? (new NativeEventEmitter(RNAudioRecorder)) : DeviceEventEmitter;
 // export default RNAudioRecorder;
 export default class AudioRecorder{
 
     constructor(props){
         this._onData = null
-        DeviceEventEmitter.addListener('onAudioPCMData', event => {
+        emitter.addListener('onAudioPCMData', event => {
             if(this._onData) this._onData(event)
           });
     }
